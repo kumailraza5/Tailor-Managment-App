@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+// API calls use relative URLs — works in both dev (via Vite proxy) and prod (served from Express)
+const API_BASE = "";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-4 mb-10">
           <div className="h-24 w-24 rounded-2xl bg-white flex items-center justify-center shadow-xl p-1.5">
             <img
-              src={`${basePath}/logo-monogram.png`}
+              src="/logo-monogram.png"
               alt="JST Tailors"
               className="w-full h-full object-contain"
             />
