@@ -668,6 +668,7 @@ export default function CustomerProfile() {
         </div>
 
         <div className="slip-info">
+          <div className="slip-row"><span>Customer ID</span><span className="font-mono">{formatCustomerId(customer.id)}</span></div>
           <div className="slip-row"><span>Customer</span><span>{customer.name}</span></div>
           <div className="slip-row"><span>Phone</span><span>{customer.phone}</span></div>
           <div className="slip-row">
