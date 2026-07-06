@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useGetDashboardStats, useGetDashboardRecentOrders, useGetDashboardTodayDeliveries, useListCustomers, getListCustomersQueryKey } from "@workspace/api-client-react";
+import { useGetDashboardStats, useGetDashboardRecentOrders, useGetDashboardTodayDeliveries, useListCustomers, getListCustomersQueryKey, useUpdateOrder, useCreatePayment, getGetDashboardStatsQueryKey, getGetDashboardRecentOrdersQueryKey, getGetDashboardTodayDeliveriesQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Scissors, ShoppingBag, CreditCard, Package, Search, Plus } from "lucide-react";
+import { Users, Scissors, ShoppingBag, CreditCard, Package, Search, Plus, CheckCircle, Coins } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +14,7 @@ import { format } from "date-fns";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -27,6 +30,40 @@ export default function Dashboard() {
     { search: debouncedSearch },
     { query: { enabled: debouncedSearch.length > 0, queryKey: getListCustomersQueryKey({ search: debouncedSearch }) } }
   );
+
+  const updateOrder = useUpdateOrder();
+  const createPayment = useCreatePayment();
+
+  const handleMarkDelivered = (orderId: number) => {
+    updateOrder.mutate({ id: orderId, data: { status: "delivered" } }, {
+      onSuccess: () => {
+        toast.success("Order marked as delivered!");
+        queryClient.invalidateQueries({ queryKey: getGetDashboardTodayDeliveriesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetDashboardRecentOrdersQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+      },
+      onError: () => toast.error("Failed to mark order as delivered"),
+    });
+  };
+
+  const handleApprovePayment = (order: any) => {
+    createPayment.mutate({
+      data: {
+        orderId: order.id,
+        customerId: order.customerId,
+        amount: Number(order.balanceAmount),
+        paymentDate: new Date().toISOString().split('T')[0],
+        notes: "Full Balance Payment",
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Payment recorded successfully!");
+        queryClient.invalidateQueries({ queryKey: getGetDashboardTodayDeliveriesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+      },
+      onError: () => toast.error("Failed to record payment"),
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -195,18 +232,55 @@ export default function Dashboard() {
             ) : todayDeliveries && todayDeliveries.length > 0 ? (
               <div className="space-y-4">
                 {todayDeliveries.map(order => (
-                  <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-4">
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-primary/10 rounded-full">
                         <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <p className="font-medium">{order.customerName}</p>
-                        <p className="text-sm text-muted-foreground">{order.orderNumber}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">{order.orderNumber}</p>
+                          <Badge variant="outline" className={`text-[10px] h-4 px-1 py-0 ${getStatusColor(order.status)}`}>
+                            {getStatusLabel(order.status)}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-destructive">Rs. {Number(order.balanceAmount).toLocaleString()} Due</p>
+                    <div className="flex items-center gap-3 sm:justify-end">
+                      <div className="text-right">
+                        {Number(order.balanceAmount) > 0 ? (
+                          <p className="font-medium text-destructive">Rs. {Number(order.balanceAmount).toLocaleString()} Due</p>
+                        ) : (
+                          <p className="font-medium text-green-600">Fully Paid</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 border-l pl-3 ml-1">
+                        {order.status !== "delivered" && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 gap-1 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 dark:border-green-900 dark:text-green-400 dark:hover:bg-green-900/30"
+                            onClick={() => handleMarkDelivered(order.id)}
+                            disabled={updateOrder.isPending}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Deliver</span>
+                          </Button>
+                        )}
+                        {Number(order.balanceAmount) > 0 && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="h-8 gap-1 border-primary/20 text-primary hover:bg-primary/5"
+                            onClick={() => handleApprovePayment(order)}
+                            disabled={createPayment.isPending}
+                          >
+                            <Coins className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Pay</span>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

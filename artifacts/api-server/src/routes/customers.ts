@@ -13,15 +13,30 @@ router.get("/customers", requireAuth(), async (req, res): Promise<void> => {
 
     if (search) {
       const searchTerm = `%${search}%`;
+      
+      let searchId: number | null = null;
+      const idMatch = search.match(/JST-(\d+)/i);
+      if (idMatch) {
+        searchId = parseInt(idMatch[1], 10);
+      } else if (!isNaN(parseInt(search, 10)) && /^\d+$/.test(search)) {
+        searchId = parseInt(search, 10);
+      }
+
+      const searchConditions = [
+        ilike(customersTable.name, searchTerm),
+        ilike(customersTable.phone, searchTerm),
+        ilike(customersTable.address, searchTerm),
+      ];
+
+      if (searchId !== null) {
+        searchConditions.push(eq(customersTable.id, searchId));
+      }
+
       const results = await db
         .select()
         .from(customersTable)
         .where(
-          or(
-            ilike(customersTable.name, searchTerm),
-            ilike(customersTable.phone, searchTerm),
-            ilike(customersTable.address, searchTerm),
-          )
+          or(...searchConditions)
         )
         .orderBy(desc(customersTable.createdAt))
         .limit(lim)

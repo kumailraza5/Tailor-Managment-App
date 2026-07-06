@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Edit, Trash, Scissors, CreditCard, Coins } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash, Scissors, CreditCard, Coins, CheckCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -345,6 +345,25 @@ export default function Orders() {
                     <TableCell className="text-right font-medium text-destructive">
                       <div className="flex items-center justify-end gap-1.5">
                         <span>Rs. {Number(order.balanceAmount).toLocaleString()}</span>
+                        {order.status !== "delivered" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-500 dark:hover:bg-green-900/30"
+                            onClick={() => {
+                              updateOrder.mutate({ id: order.id, data: { status: "delivered" } }, {
+                                onSuccess: () => {
+                                  toast.success("Order marked as delivered!");
+                                  queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
+                                }
+                              });
+                            }}
+                            title="Mark as Delivered"
+                            disabled={updateOrder.isPending}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         {Number(order.balanceAmount) > 0 && (
                           <Button
                             variant="ghost"
