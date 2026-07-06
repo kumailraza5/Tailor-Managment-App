@@ -722,11 +722,20 @@ export default function CustomerProfile() {
           </div>
         </div>
 
-        {m?.additionalNotes && (
+        {(customer.notes || m?.additionalNotes) && (
           <>
             <div className="slip-divider" />
             <div className="slip-section-title">📝 NOTES</div>
-            <div className="slip-notes">{m.additionalNotes}</div>
+            {customer.notes && (
+              <div className="slip-notes mb-2">
+                <strong>Client:</strong> {customer.notes}
+              </div>
+            )}
+            {m?.additionalNotes && (
+              <div className="slip-notes">
+                <strong>Measurements:</strong> {m.additionalNotes}
+              </div>
+            )}
           </>
         )}
 
