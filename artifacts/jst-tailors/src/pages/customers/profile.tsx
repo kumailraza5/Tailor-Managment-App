@@ -282,6 +282,14 @@ export default function CustomerProfile() {
     }
   }, []);
 
+  const [selectedPrintOrder, setSelectedPrintOrder] = useState<any>(null);
+
+  useEffect(() => {
+    if (customer?.orders && customer.orders.length > 0 && !selectedPrintOrder) {
+      setSelectedPrintOrder(customer.orders[0]);
+    }
+  }, [customer, selectedPrintOrder]);
+
   const onSubmit = (data: MeasurementFormValues) => {
     upsertMeasurements.mutate(
       { id: customerId, data },
@@ -402,7 +410,7 @@ export default function CustomerProfile() {
             id="print-parchi-btn"
           >
             <Printer className="h-4 w-4" />
-            Print Parchi
+            {selectedPrintOrder ? `Print Parchi (${selectedPrintOrder.orderNumber})` : "Print Parchi"}
           </Button>
         </div>
       </div>
@@ -585,6 +593,7 @@ export default function CustomerProfile() {
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Balance</TableHead>
+                      <TableHead className="text-right print:hidden">Print</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -607,6 +616,20 @@ export default function CustomerProfile() {
                         </TableCell>
                         <TableCell className="text-right font-medium text-destructive">
                           Rs. {Number(order.balanceAmount).toFixed(0)}
+                        </TableCell>
+                        <TableCell className="text-right print:hidden">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setSelectedPrintOrder(order);
+                              setTimeout(() => window.print(), 100);
+                            }}
+                            title="Print this order slip"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -671,8 +694,17 @@ export default function CustomerProfile() {
           <div className="slip-row"><span>Customer ID</span><span className="font-mono">{formatCustomerId(customer.id)}</span></div>
           <div className="slip-row"><span>Customer</span><span>{customer.name}</span></div>
           <div className="slip-row"><span>Phone</span><span>{customer.phone}</span></div>
+          {selectedPrintOrder ? (
+            <>
+              <div className="slip-row"><span>Order #</span><span className="font-mono">{selectedPrintOrder.orderNumber}</span></div>
+              <div className="slip-row">
+                <span>Delivery Date</span>
+                <span>{selectedPrintOrder.deliveryDate ? format(new Date(selectedPrintOrder.deliveryDate), "dd/MM/yyyy") : "—"}</span>
+              </div>
+            </>
+          ) : null}
           <div className="slip-row">
-            <span>Date</span>
+            <span>Print Date</span>
             <span>{format(new Date(), "dd/MM/yyyy")}</span>
           </div>
         </div>
@@ -743,18 +775,37 @@ export default function CustomerProfile() {
 
         <div className="slip-section-title">💰 BALANCE</div>
         <div className="slip-grid">
-          <div className="slip-row">
-            <span>Total</span>
-            <span>Rs. {parseFloat(String(customer.totalPaid || 0)).toFixed(0)}</span>
-          </div>
-          <div className="slip-row">
-            <span>Paid (Advance)</span>
-            <span>Rs. {parseFloat(String(customer.totalPaid || 0)).toFixed(0)}</span>
-          </div>
-          <div className="slip-row slip-balance-row">
-            <span>Balance Due</span>
-            <span>Rs. {parseFloat(String(customer.totalBalance || 0)).toFixed(0)}</span>
-          </div>
+          {selectedPrintOrder ? (
+            <>
+              <div className="slip-row">
+                <span>Order Total</span>
+                <span>Rs. {parseFloat(String(selectedPrintOrder.totalAmount || 0)).toFixed(0)}</span>
+              </div>
+              <div className="slip-row">
+                <span>Paid (Advance)</span>
+                <span>Rs. {parseFloat(String(selectedPrintOrder.advanceAmount || 0)).toFixed(0)}</span>
+              </div>
+              <div className="slip-row slip-balance-row">
+                <span>Balance Due</span>
+                <span>Rs. {parseFloat(String(selectedPrintOrder.balanceAmount || 0)).toFixed(0)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="slip-row">
+                <span>Total Account</span>
+                <span>Rs. {(parseFloat(String(customer.totalPaid || 0)) + parseFloat(String(customer.totalBalance || 0))).toFixed(0)}</span>
+              </div>
+              <div className="slip-row">
+                <span>Total Paid</span>
+                <span>Rs. {parseFloat(String(customer.totalPaid || 0)).toFixed(0)}</span>
+              </div>
+              <div className="slip-row slip-balance-row">
+                <span>Balance Due</span>
+                <span>Rs. {parseFloat(String(customer.totalBalance || 0)).toFixed(0)}</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="slip-divider" />

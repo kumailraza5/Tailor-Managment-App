@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/requireAuth";
-import { db, ordersTable, customersTable } from "@workspace/db";
+import { db, ordersTable, customersTable, paymentsTable } from "@workspace/db";
 import { eq, ilike, or, desc, sql } from "drizzle-orm";
 
 const router = Router();
@@ -114,6 +114,16 @@ router.post("/orders", requireAuth(), async (req, res): Promise<void> => {
       })
       .returning();
 
+    if (advance > 0) {
+      await db.insert(paymentsTable).values({
+        orderId: order.id,
+        customerId: order.customerId,
+        amount: String(advance),
+        paymentDate: orderDate,
+        notes: `Advance Payment for Order ${orderNumber}`,
+      });
+    }
+
     const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, order.customerId));
     res.status(201).json({ ...order, customerName: customer?.name ?? null });
   } catch (err) {
@@ -178,6 +188,41 @@ router.patch("/orders/:id", requireAuth(), async (req, res): Promise<void> => {
       updateData.totalAmount = String(total);
       updateData.advanceAmount = String(advance);
       updateData.balanceAmount = String(total - advance);
+
+      // Synchronize the advance payment in paymentsTable
+      const oldAdvance = parseFloat(existing.advanceAmount);
+      if (advance !== oldAdvance) {
+        // Find existing advance payment for this order
+        const [existingAdvancePayment] = await db
+          .select()
+          .from(paymentsTable)
+          .where(eq(paymentsTable.orderId, id))
+          .limit(1); // Usually the first payment is the advance
+
+        if (existingAdvancePayment) {
+          if (advance > 0) {
+            await db
+              .update(paymentsTable)
+              .set({
+                amount: String(advance),
+                paymentDate: orderDate !== undefined ? orderDate : existing.orderDate,
+              })
+              .where(eq(paymentsTable.id, existingAdvancePayment.id));
+          } else {
+            // Delete if new advance is 0
+            await db.delete(paymentsTable).where(eq(paymentsTable.id, existingAdvancePayment.id));
+          }
+        } else if (advance > 0) {
+          // Create new advance payment if none existed before
+          await db.insert(paymentsTable).values({
+            orderId: id,
+            customerId: existing.customerId,
+            amount: String(advance),
+            paymentDate: orderDate !== undefined ? orderDate : existing.orderDate,
+            notes: `Advance Payment for Order ${existing.orderNumber}`,
+          });
+        }
+      }
     }
 
     const [updated] = await db
