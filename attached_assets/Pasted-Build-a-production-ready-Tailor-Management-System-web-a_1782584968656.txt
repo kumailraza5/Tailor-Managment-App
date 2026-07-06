@@ -1,0 +1,459 @@
+Build a production-ready Tailor Management System web application for my tailoring shop.
+
+Shop Name:
+JST Tailors
+
+Tech Stack:
+
+Frontend:
+- React 19
+- Vite
+- Tailwind CSS
+- React Router
+- React Hook Form
+- TanStack Query
+- Axios
+- React Icons
+
+Backend:
+- Node.js
+- Express.js
+
+Database:
+- Supabase PostgreSQL
+
+Authentication:
+- Simple username + password login.
+- No email verification.
+- Store users in Supabase.
+- Session based authentication using JWT.
+- Only one panel/dashboard.
+- No separate Admin/Staff dashboard.
+
+The application must have a modern premium UI with smooth animations, glassmorphism where appropriate, rounded corners, beautiful cards and responsive layout.
+
+I will provide my shop logo later.
+Use that logo in Navbar, Login page and Sidebar.
+Design the complete UI according to my logo colors.
+
+==================================================
+PROJECT STRUCTURE
+==================================================
+
+tailor-management/
+
+│
+
+├── client/
+
+│ ├── public/
+
+│ ├── src/
+
+│ │ ├── assets/
+
+│ │ ├── components/
+
+│ │ │ ├── layout/
+
+│ │ │ ├── ui/
+
+│ │ │ ├── forms/
+
+│ │ │ ├── tables/
+
+│ │ │ ├── modals/
+
+│ │ │ └── cards/
+
+│ │ │
+
+│ │ ├── pages/
+
+│ │ │ ├── Login/
+
+│ │ │ ├── Dashboard/
+
+│ │ │ ├── Customers/
+
+│ │ │ ├── CustomerProfile/
+
+│ │ │ ├── Orders/
+
+│ │ │ ├── Payments/
+
+│ │ │ ├── Reports/
+
+│ │ │ ├── Settings/
+
+│ │ │ └── NotFound/
+
+│ │ │
+
+│ │ ├── hooks/
+
+│ │ ├── context/
+
+│ │ ├── services/
+
+│ │ ├── utils/
+
+│ │ ├── routes/
+
+│ │ ├── constants/
+
+│ │ ├── styles/
+
+│ │ ├── App.jsx
+
+│ │ └── main.jsx
+
+│
+
+├── server/
+
+│ ├── config/
+
+│ ├── middleware/
+
+│ ├── routes/
+
+│ ├── controllers/
+
+│ ├── services/
+
+│ ├── models/
+
+│ ├── utils/
+
+│ ├── validations/
+
+│ ├── app.js
+
+│ └── server.js
+
+│
+
+├── shared/
+
+│
+
+├── supabase/
+
+│ ├── schema.sql
+
+│ └── seed.sql
+
+│
+
+├── .env.example
+
+├── package.json
+
+└── README.md
+
+==================================================
+FEATURES
+==================================================
+
+LOGIN
+
+Simple username/password login.
+
+==================================================
+
+SIDEBAR
+
+Dashboard
+
+Customers
+
+Orders
+
+Payments
+
+Reports
+
+Settings
+
+Logout
+
+==================================================
+
+DASHBOARD
+
+Show beautiful statistic cards.
+
+Cards:
+
+Total Customers
+
+Total Orders
+
+Pending Orders
+
+In Stitching
+
+Ready Orders
+
+Delivered Orders
+
+Today's Delivery
+
+Today's Collection
+
+Remaining Balance
+
+Recent Orders Table
+
+==================================================
+
+CUSTOMERS
+
+Features:
+
+Add Customer
+
+Edit Customer
+
+Delete Customer
+
+Live Search
+
+Search by
+
+Name
+
+Phone Number
+
+Address
+
+Customer Profile
+
+Order History
+
+Measurement History
+
+Payment History
+
+==================================================
+
+CUSTOMER PROFILE
+
+Customer Information
+
+Name
+
+Phone
+
+Address
+
+Date Created
+
+Measurements
+
+Orders
+
+Payments
+
+==================================================
+
+MEASUREMENTS
+
+Each measurement label must show English and Urdu together.
+
+Example:
+
+Length (لمبائی)
+
+Shoulder (جماتی)
+
+Sleeve (آستین)
+
+Chest (چھاتی)
+
+Waist (کمر)
+
+Hip (ہپ)
+
+Ghera (گھیرا)
+
+Shalwar Length (شلوار لمبائی)
+
+Bottom (پانچہ)
+
+Collar (کالر)
+
+Cuff (کف)
+
+Pocket (جیب)
+
+Front Patti (فرنٹ پٹی)
+
+Notes (نوٹس)
+
+Allow editing measurements anytime.
+
+==================================================
+
+ORDERS
+
+Create Order
+
+Edit Order
+
+Delete Order
+
+Order Number Auto Generate
+
+Order Date
+
+Delivery Date
+
+Status
+
+Pending
+
+In Stitching
+
+Ready
+
+Delivered
+
+Advance
+
+Balance
+
+Notes
+
+==================================================
+
+PAYMENTS
+
+Advance Payment
+
+Remaining Payment
+
+Payment History
+
+==================================================
+
+REPORTS
+
+Daily Report
+
+Monthly Report
+
+Pending Orders
+
+Delivered Orders
+
+Payment Report
+
+Customer Report
+
+==================================================
+
+SETTINGS
+
+Shop Name
+
+Shop Logo
+
+Change Username
+
+Change Password
+
+==================================================
+
+SEARCH
+
+Implement instant search.
+
+While typing customer name, show suggestions.
+
+Clicking a customer should immediately open Customer Profile.
+
+==================================================
+
+DATABASE
+
+Use proper relational database.
+
+Tables:
+
+users
+
+customers
+
+measurements
+
+orders
+
+payments
+
+==================================================
+
+UI REQUIREMENTS
+
+Modern Tailwind dashboard.
+
+Premium Admin Template style.
+
+Responsive for Mobile/Desktop.
+
+Dark & Light Mode.
+
+Beautiful Tables.
+
+Loading Skeletons.
+
+Toast Notifications.
+
+Confirmation Dialogs.
+
+Reusable Components.
+
+Proper Error Handling.
+
+Form Validation.
+
+Professional Empty States.
+
+Professional 404 Page.
+
+==================================================
+
+CODE QUALITY
+
+Use clean architecture.
+
+Reusable components.
+
+Proper folder separation.
+
+Environment variables.
+
+REST API.
+
+Error middleware.
+
+Validation middleware.
+
+Comments where needed.
+
+Scalable codebase.
+
+==================================================
+
+IMPORTANT
+
+Do not generate everything in one huge file.
+
+Create modular components.
+
+Create reusable APIs.
+
+Follow best practices.
+
+The application should feel like a premium SaaS dashboard instead of a basic CRUD application.

@@ -1,0 +1,908 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: JST Tailors Management System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: customers
+    description: Customer management
+  - name: measurements
+    description: Customer measurements
+  - name: orders
+    description: Order management
+  - name: payments
+    description: Payment management
+  - name: dashboard
+    description: Dashboard analytics
+  - name: settings
+    description: Shop settings
+  - name: reports
+    description: Reports
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers with optional search
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name, phone, or address
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfile"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /customers/{id}/measurements:
+    get:
+      operationId: getCustomerMeasurements
+      tags: [measurements]
+      summary: Get latest measurements for a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer measurements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Measurement"
+    put:
+      operationId: upsertCustomerMeasurements
+      tags: [measurements]
+      summary: Create or update customer measurements
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeasurementInput"
+      responses:
+        "200":
+          description: Upserted measurements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Measurement"
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders with optional filters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_stitching, ready, delivered]
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Created order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Update an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      operationId: deleteOrder
+      tags: [orders]
+      summary: Delete an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: orderId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Record a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}:
+    delete:
+      operationId: deletePayment
+      tags: [payments]
+      summary: Delete a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-orders:
+    get:
+      operationId: getDashboardRecentOrders
+      tags: [dashboard]
+      summary: Get recent orders for dashboard
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /dashboard/today-deliveries:
+    get:
+      operationId: getDashboardTodayDeliveries
+      tags: [dashboard]
+      summary: Get today's deliveries
+      responses:
+        "200":
+          description: Today's deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /reports/daily:
+    get:
+      operationId: getDailyReport
+      tags: [reports]
+      summary: Get daily report
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            description: "Date in YYYY-MM-DD format, defaults to today"
+      responses:
+        "200":
+          description: Daily report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyReport"
+
+  /reports/monthly:
+    get:
+      operationId: getMonthlyReport
+      tags: [reports]
+      summary: Get monthly report
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyReport"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get shop settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update shop settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    User:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: ["string", "null"]
+
+    Customer:
+      type: object
+      required: [id, name, phone, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CustomerProfile:
+      type: object
+      required: [id, name, phone, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        measurements:
+          $ref: "#/components/schemas/Measurement"
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        totalOrders:
+          type: integer
+        totalPaid:
+          type: number
+        totalBalance:
+          type: number
+
+    CustomerInput:
+      type: object
+      required: [name, phone]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        address:
+          type: string
+        notes:
+          type: string
+
+    CustomerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        address:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    Measurement:
+      type: object
+      required: [id, customerId]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        length:
+          type: ["number", "null"]
+        shoulder:
+          type: ["number", "null"]
+        sleeve:
+          type: ["number", "null"]
+        chest:
+          type: ["number", "null"]
+        waist:
+          type: ["number", "null"]
+        hip:
+          type: ["number", "null"]
+        ghera:
+          type: ["number", "null"]
+        shalwarLength:
+          type: ["number", "null"]
+        bottom:
+          type: ["number", "null"]
+        collar:
+          type: ["number", "null"]
+        cuff:
+          type: ["number", "null"]
+        pocket:
+          type: ["number", "null"]
+        frontPatti:
+          type: ["number", "null"]
+        shalwarGhair:
+          type: ["number", "null"]
+        shalwarPocket:
+          type: ["number", "null"]
+        buttonsType:
+          type: ["string", "null"]
+        collarType:
+          type: ["string", "null"]
+        gheraStyle:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        additionalNotes:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+
+    MeasurementInput:
+      type: object
+      properties:
+        length:
+          type: ["number", "null"]
+        shoulder:
+          type: ["number", "null"]
+        sleeve:
+          type: ["number", "null"]
+        chest:
+          type: ["number", "null"]
+        waist:
+          type: ["number", "null"]
+        hip:
+          type: ["number", "null"]
+        ghera:
+          type: ["number", "null"]
+        shalwarLength:
+          type: ["number", "null"]
+        bottom:
+          type: ["number", "null"]
+        collar:
+          type: ["number", "null"]
+        cuff:
+          type: ["number", "null"]
+        pocket:
+          type: ["number", "null"]
+        frontPatti:
+          type: ["number", "null"]
+        shalwarGhair:
+          type: ["number", "null"]
+        shalwarPocket:
+          type: ["number", "null"]
+        buttonsType:
+          type: ["string", "null"]
+        collarType:
+          type: ["string", "null"]
+        gheraStyle:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        additionalNotes:
+          type: ["string", "null"]
+
+    Order:
+      type: object
+      required: [id, orderNumber, customerId, orderDate, status, totalAmount, advanceAmount, balanceAmount]
+      properties:
+        id:
+          type: integer
+        orderNumber:
+          type: string
+        customerId:
+          type: integer
+        customerName:
+          type: ["string", "null"]
+        orderDate:
+          type: string
+        deliveryDate:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, in_stitching, ready, delivered]
+        totalAmount:
+          type: number
+        advanceAmount:
+          type: number
+        balanceAmount:
+          type: number
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    OrderInput:
+      type: object
+      required: [customerId, orderDate, totalAmount]
+      properties:
+        customerId:
+          type: integer
+        orderDate:
+          type: string
+        deliveryDate:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, in_stitching, ready, delivered]
+          default: pending
+        totalAmount:
+          type: number
+        advanceAmount:
+          type: number
+          default: 0
+        notes:
+          type: string
+
+    OrderUpdate:
+      type: object
+      properties:
+        customerId:
+          type: integer
+        orderDate:
+          type: string
+        deliveryDate:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, in_stitching, ready, delivered]
+        totalAmount:
+          type: number
+        advanceAmount:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    Payment:
+      type: object
+      required: [id, orderId, customerId, amount, paymentDate]
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        customerId:
+          type: integer
+        customerName:
+          type: ["string", "null"]
+        orderNumber:
+          type: ["string", "null"]
+        amount:
+          type: number
+        paymentDate:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PaymentInput:
+      type: object
+      required: [orderId, customerId, amount, paymentDate]
+      properties:
+        orderId:
+          type: integer
+        customerId:
+          type: integer
+        amount:
+          type: number
+        paymentDate:
+          type: string
+        notes:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalCustomers, totalOrders, pendingOrders, inStitchingOrders, readyOrders, deliveredOrders, todayDeliveries, todayCollection, remainingBalance]
+      properties:
+        totalCustomers:
+          type: integer
+        totalOrders:
+          type: integer
+        pendingOrders:
+          type: integer
+        inStitchingOrders:
+          type: integer
+        readyOrders:
+          type: integer
+        deliveredOrders:
+          type: integer
+        todayDeliveries:
+          type: integer
+        todayCollection:
+          type: number
+        remainingBalance:
+          type: number
+
+    DailyReport:
+      type: object
+      required: [date, newOrders, deliveredOrders, totalCollection, newCustomers]
+      properties:
+        date:
+          type: string
+        newOrders:
+          type: integer
+        deliveredOrders:
+          type: integer
+        totalCollection:
+          type: number
+        newCustomers:
+          type: integer
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+
+    MonthlyReport:
+      type: object
+      required: [year, month, totalOrders, totalRevenue, totalCollected, totalBalance, newCustomers]
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        totalCollected:
+          type: number
+        totalBalance:
+          type: number
+        newCustomers:
+          type: integer
+        ordersByStatus:
+          type: object
+          properties:
+            pending:
+              type: integer
+            in_stitching:
+              type: integer
+            ready:
+              type: integer
+            delivered:
+              type: integer
+
+    Settings:
+      type: object
+      required: [id, shopName]
+      properties:
+        id:
+          type: integer
+        shopName:
+          type: string
+        shopLogo:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+
+    SettingsUpdate:
+      type: object
+      properties:
+        shopName:
+          type: string
+          minLength: 1
+        shopLogo:
+          type: ["string", "null"]

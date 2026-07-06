@@ -1,0 +1,18 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_config_user_agent || '')) { console.error('Use pnpm instead'); process.exit(1); }\"",
+    "predev": "node -e \"const {execSync}=require('child_process');['3001','5000','5001','5002','5003'].forEach(p=>{try{const r=execSync('netstat -ano 2>nul | findstr :'+p+' | findstr LISTENING',{encoding:'utf8'});(r.match(/\\d+$/mg)||[]).forEach(pid=>{try{execSync('taskkill /F /PID '+pid.trim()+' 2>nul')}catch(_){}});}catch(_){}})\"",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "typescript": "~5.9.3"
+  }
+}
