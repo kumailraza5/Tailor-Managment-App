@@ -21,17 +21,29 @@ const fallbackLogo = `${basePath}/logo-monogram.png`;
 
 function SidebarLogo({ logoSrc, size = "lg" }: { logoSrc: string; size?: "sm" | "lg" }) {
   const isLg = size === "lg";
+  if (isLg) {
+    return (
+      <Link href="/" className="flex flex-col items-center gap-2">
+        <div className="h-16 w-16 rounded-2xl bg-white flex items-center justify-center shadow-xl p-1.5">
+          <img
+            src={logoSrc}
+            alt="Shop Logo"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <p className="text-[10px] tracking-[0.2em] text-sidebar-foreground/50 uppercase font-medium">
+          Tailor Manager
+        </p>
+      </Link>
+    );
+  }
   return (
     <Link href="/" className="flex items-center justify-center">
-      <div
-        className={`flex items-center justify-center bg-white rounded-xl shadow-sm ${
-          isLg ? "p-1" : "p-0.5"
-        }`}
-      >
+      <div className="flex items-center justify-center bg-white rounded-xl shadow-sm p-0.5">
         <img
           src={logoSrc}
           alt="Shop Logo"
-          className={`object-contain ${isLg ? "h-11 w-11" : "h-7 w-7"}`}
+          className="h-7 w-7 object-contain"
         />
       </div>
     </Link>
@@ -81,7 +93,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="hidden border-r bg-sidebar md:block">
         <div className="flex h-full max-h-screen flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center justify-center border-b border-sidebar-border px-5">
+          <div className="flex h-24 items-center justify-center border-b border-sidebar-border px-5">
             <SidebarLogo logoSrc={logoSrc} size="lg" />
           </div>
           {/* Nav */}
@@ -126,7 +138,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] bg-sidebar text-sidebar-foreground border-r border-sidebar-border p-0">
-              <div className="flex h-16 items-center justify-center border-b border-sidebar-border px-5">
+              <div className="flex h-24 items-center justify-center border-b border-sidebar-border px-5">
                 <SidebarLogo logoSrc={logoSrc} size="lg" />
               </div>
               <nav className="grid gap-0.5 p-3 mt-2 text-sm font-medium">
