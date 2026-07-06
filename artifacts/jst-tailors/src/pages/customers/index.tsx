@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { Search, Plus, MoreHorizontal, Edit, Trash, Eye, Users, Scissors } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { formatCustomerId } from "@/lib/customer-id";
 
 const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -163,6 +165,7 @@ export default function Customers() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[110px]">Customer ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Address</TableHead>
@@ -172,6 +175,14 @@ export default function Customers() {
               <TableBody>
                 {customers.map((customer) => (
                   <TableRow key={customer.id}>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className="font-mono font-semibold text-xs px-2 py-0.5 bg-primary/10 text-primary border border-primary/20"
+                      >
+                        {formatCustomerId(customer.id)}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.phone}</TableCell>
                     <TableCell className="text-muted-foreground truncate max-w-[200px]">{customer.address || "-"}</TableCell>

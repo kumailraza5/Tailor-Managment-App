@@ -48,9 +48,11 @@ import {
   ShoppingBag,
   Printer,
   Plus,
+  Hash,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { formatCustomerId } from "@/lib/customer-id";
 import {
   Table,
   TableBody,
@@ -362,7 +364,16 @@ export default function CustomerProfile() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">{customer.name}</h2>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-3xl font-bold tracking-tight">{customer.name}</h2>
+              <Badge
+                variant="secondary"
+                className="text-sm font-mono font-semibold px-3 py-1 bg-primary/10 text-primary border border-primary/20"
+              >
+                <Hash className="h-3.5 w-3.5 mr-1" />
+                {formatCustomerId(customer.id)}
+              </Badge>
+            </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
               <span className="flex items-center gap-1">
                 <Phone className="h-3 w-3" /> {customer.phone}
@@ -404,6 +415,15 @@ export default function CustomerProfile() {
             <CardTitle>Customer Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Customer ID */}
+            <div className="rounded-lg bg-primary/5 border border-primary/15 px-4 py-3 flex items-center justify-between">
+              <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                <Hash className="h-4 w-4" /> Customer ID
+              </span>
+              <span className="font-mono font-bold text-primary text-sm tracking-wide">
+                {formatCustomerId(customer.id)}
+              </span>
+            </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2">
                 <ShoppingBag className="h-4 w-4" /> Total Orders
