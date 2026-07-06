@@ -1,3 +1,4 @@
+import path from "path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -32,4 +33,21 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api", router);
 
+// Serve frontend static assets in production
+if (process.env.NODE_ENV === "production") {
+  const frontendPath = path.resolve(__dirname, "../../jst-tailors/dist/public");
+  
+  app.use(express.static(frontendPath));
+  
+  // Wildcard handler for SPA routing (excluding API routes)
+  app.get("*any", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
+
 export default app;
+

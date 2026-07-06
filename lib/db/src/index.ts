@@ -21,7 +21,20 @@ if (!connectionString) {
   );
 }
 
-export const pool = new Pool({ connectionString, ssl: process.env.SUPABASE_DATABASE_URL ? { rejectUnauthorized: false } : undefined });
+const isProduction = process.env.NODE_ENV === "production";
+const requiresSsl =
+  process.env.SUPABASE_DATABASE_URL ||
+  isProduction ||
+  connectionString.includes("supabase.co") ||
+  connectionString.includes("supabase.com") ||
+  connectionString.includes("supabase.net") ||
+  connectionString.includes("pooler");
+
+export const pool = new Pool({
+  connectionString,
+  ssl: requiresSsl ? { rejectUnauthorized: false } : undefined,
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
+

@@ -10,6 +10,8 @@ try {
 
 import app from "./app";
 import { logger } from "./lib/logger";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
 
 const rawPort = process.env["PORT"] || "3001";
 const port = Number(rawPort);
@@ -25,4 +27,17 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Keep-Alive Scheduler (runs every 6 hours)
+  const KEEP_ALIVE_INTERVAL = 6 * 60 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      logger.info("Running scheduled internal Supabase Keep-Alive query...");
+      await db.execute(sql`SELECT 1`);
+      logger.info("Scheduled internal Supabase Keep-Alive query succeeded");
+    } catch (error) {
+      logger.error({ err: error }, "Scheduled internal Supabase Keep-Alive query failed");
+    }
+  }, KEEP_ALIVE_INTERVAL);
 });
+

@@ -8,6 +8,7 @@ import paymentsRouter from "./payments";
 import dashboardRouter from "./dashboard";
 import reportsRouter from "./reports";
 import settingsRouter from "./settings";
+import keepaliveRouter from "./keepalive";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,7 @@ router.use(paymentsRouter);
 router.use(dashboardRouter);
 router.use(reportsRouter);
 router.use(settingsRouter);
+router.use(keepaliveRouter);
 
 export default router;
+
