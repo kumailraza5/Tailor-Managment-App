@@ -28,6 +28,46 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
+  // Historic advance payments synchronization
+  (async () => {
+    try {
+      const { ordersTable, paymentsTable } = await import("@workspace/db");
+      const { eq } = await import("drizzle-orm");
+
+      logger.info("Checking for historic advance payments that lack transaction records...");
+      const orders = await db.select().from(ordersTable);
+      let count = 0;
+
+      for (const order of orders) {
+        const advance = parseFloat(order.advanceAmount);
+        if (advance > 0) {
+          const payments = await db
+            .select()
+            .from(paymentsTable)
+            .where(eq(paymentsTable.orderId, order.id));
+
+          if (payments.length === 0) {
+            await db.insert(paymentsTable).values({
+              orderId: order.id,
+              customerId: order.customerId,
+              amount: order.advanceAmount,
+              paymentDate: order.orderDate,
+              notes: `Advance Payment for Order ${order.orderNumber} (Auto-recovered)`,
+            });
+            count++;
+          }
+        }
+      }
+      if (count > 0) {
+        logger.info(`Successfully synchronized ${count} historic advance payments to payments table.`);
+      } else {
+        logger.info("All historic advance payments are already synchronized.");
+      }
+    } catch (err) {
+      logger.error({ err }, "Failed to synchronize historic advance payments");
+    }
+  })();
+
   // Keep-Alive Scheduler (runs every 6 hours)
   const KEEP_ALIVE_INTERVAL = 6 * 60 * 60 * 1000;
   setInterval(async () => {

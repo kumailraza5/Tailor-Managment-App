@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useListOrders, useCreateOrder, useUpdateOrder, useDeleteOrder, getListOrdersQueryKey, useListCustomers } from "@workspace/api-client-react";
+import { useListOrders, useCreateOrder, useUpdateOrder, useDeleteOrder, getListOrdersQueryKey, useListCustomers, useCreatePayment, getListPaymentsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Edit, Trash, Scissors } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash, Scissors, CreditCard, Coins } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,9 @@ const orderSchema = z.object({
   totalAmount: z.coerce.number().min(0, "Amount must be positive"),
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().optional(),
+}).refine(data => data.advanceAmount <= data.totalAmount, {
+  message: "Advance amount cannot be greater than total amount",
+  path: ["advanceAmount"],
 });
 
 type OrderFormValues = z.infer<typeof orderSchema>;
@@ -46,6 +49,49 @@ export default function Orders() {
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
   const deleteOrder = useDeleteOrder();
+
+  const [selectedPayOrder, setSelectedPayOrder] = useState<any>(null);
+  const [isPayOpen, setIsPayOpen] = useState(false);
+  const createPayment = useCreatePayment();
+
+  const quickPaymentForm = useForm<any>({
+    defaultValues: {
+      amount: 0,
+      paymentDate: new Date().toISOString().split('T')[0],
+      notes: "",
+    }
+  });
+
+  const openQuickPay = (order: any) => {
+    setSelectedPayOrder(order);
+    quickPaymentForm.reset({
+      amount: Number(order.balanceAmount),
+      paymentDate: new Date().toISOString().split('T')[0],
+      notes: `Remaining Payment for Order ${order.orderNumber}`,
+    });
+    setIsPayOpen(true);
+  };
+
+  const onQuickPaySubmit = (data: any) => {
+    if (!selectedPayOrder) return;
+    createPayment.mutate({
+      data: {
+        orderId: selectedPayOrder.id,
+        customerId: selectedPayOrder.customerId,
+        amount: Number(data.amount),
+        paymentDate: data.paymentDate,
+        notes: data.notes || null,
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Payment recorded successfully!");
+        setIsPayOpen(false);
+        queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey() });
+      },
+      onError: () => toast.error("Failed to record payment")
+    });
+  };
 
   const addForm = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -214,7 +260,23 @@ export default function Orders() {
                     <FormItem><FormLabel>Total Amount</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={addForm.control} name="advanceAmount" render={({ field }) => (
-                    <FormItem><FormLabel>Advance Amount</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                      <FormLabel>Advance Amount</FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          onClick={() => {
+                            const total = addForm.getValues("totalAmount");
+                            addForm.setValue("advanceAmount", total);
+                          }}
+                        >
+                          Full
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
                   )} />
                 </div>
                 <FormField control={addForm.control} name="notes" render={({ field }) => (
@@ -280,7 +342,22 @@ export default function Orders() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">Rs. {Number(order.totalAmount).toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-medium text-destructive">Rs. {Number(order.balanceAmount).toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-medium text-destructive">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span>Rs. {Number(order.balanceAmount).toLocaleString()}</span>
+                        {Number(order.balanceAmount) > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-primary hover:text-primary/80 hover:bg-primary/5"
+                            onClick={() => openQuickPay(order)}
+                            title="Record Payment for this Order"
+                          >
+                            <Coins className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -386,7 +463,23 @@ export default function Orders() {
                   <FormItem><FormLabel>Total Amount</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={editForm.control} name="advanceAmount" render={({ field }) => (
-                  <FormItem><FormLabel>Advance Amount</FormLabel><FormControl><Input type="number" step="0.01" disabled {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Advance Amount</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        onClick={() => {
+                          const total = editForm.getValues("totalAmount");
+                          editForm.setValue("advanceAmount", total);
+                        }}
+                      >
+                        Full
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )} />
               </div>
               <FormField control={editForm.control} name="notes" render={({ field }) => (
@@ -395,6 +488,50 @@ export default function Orders() {
               <DialogFooter>
                 <Button type="submit" disabled={updateOrder.isPending}>
                   {updateOrder.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPayOpen} onOpenChange={setIsPayOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Payment for Order {selectedPayOrder?.orderNumber}</DialogTitle>
+          </DialogHeader>
+          <Form {...quickPaymentForm}>
+            <form onSubmit={quickPaymentForm.handleSubmit(onQuickPaySubmit)} className="space-y-4">
+              <FormField control={quickPaymentForm.control} name="amount" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount Paid (Rs.)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={quickPaymentForm.control} name="paymentDate" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={quickPaymentForm.control} name="notes" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g. Remaining balance payment" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <DialogFooter>
+                <Button type="submit" disabled={createPayment.isPending}>
+                  {createPayment.isPending ? "Recording..." : "Record Payment"}
                 </Button>
               </DialogFooter>
             </form>

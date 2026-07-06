@@ -133,6 +133,9 @@ export default function Customers() {
                 <FormField control={addForm.control} name="address" render={({ field }) => (
                   <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <FormField control={addForm.control} name="notes" render={({ field }) => (
+                  <FormItem><FormLabel>Notes</FormLabel><FormControl><Input {...field} placeholder="Client specific notes (e.g. VIP)" /></FormControl><FormMessage /></FormItem>
+                )} />
                 <DialogFooter>
                   <Button type="submit" disabled={createCustomer.isPending}>
                     {createCustomer.isPending ? "Saving..." : "Save Customer"}
@@ -281,6 +284,9 @@ export default function Customers() {
               )} />
               <FormField control={editForm.control} name="address" render={({ field }) => (
                 <FormItem><FormLabel>Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={editForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>Notes</FormLabel><FormControl><Input {...field} placeholder="Client specific notes (e.g. VIP)" /></FormControl><FormMessage /></FormItem>
               )} />
               <DialogFooter>
                 <Button type="submit" disabled={updateCustomer.isPending}>

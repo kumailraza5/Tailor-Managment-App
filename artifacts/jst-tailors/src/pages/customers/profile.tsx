@@ -100,6 +100,9 @@ const orderInputSchema = z.object({
   totalAmount: z.coerce.number().min(0, "Amount must be positive"),
   advanceAmount: z.coerce.number().min(0).default(0),
   notes: z.string().optional(),
+}).refine(data => data.advanceAmount <= data.totalAmount, {
+  message: "Advance amount cannot be greater than total amount",
+  path: ["advanceAmount"],
 });
 
 type OrderInputFormValues = z.infer<typeof orderInputSchema>;
@@ -754,10 +757,15 @@ export default function CustomerProfile() {
           </div>
         </div>
 
-        {(customer.notes || m?.additionalNotes) && (
+        {(customer.notes || m?.additionalNotes || selectedPrintOrder?.notes) && (
           <>
             <div className="slip-divider" />
             <div className="slip-section-title">📝 NOTES</div>
+            {selectedPrintOrder?.notes && (
+              <div className="slip-notes mb-2">
+                <strong>Order:</strong> {selectedPrintOrder.notes}
+              </div>
+            )}
             {customer.notes && (
               <div className="slip-notes mb-2">
                 <strong>Client:</strong> {customer.notes}
@@ -848,7 +856,19 @@ export default function CustomerProfile() {
                 <FormField control={orderForm.control} name="advanceAmount" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Advance Paid (Rs.)</FormLabel>
-                    <FormControl><Input type="number" step="1" {...field} /></FormControl>
+                    <div className="flex gap-2">
+                      <FormControl><Input type="number" step="1" {...field} /></FormControl>
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        onClick={() => {
+                          const total = orderForm.getValues("totalAmount");
+                          orderForm.setValue("advanceAmount", total);
+                        }}
+                      >
+                        Full
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )} />
