@@ -26,7 +26,12 @@ const customerSchema = z.object({
   notes: z.string().optional(),
 });
 
+const addCustomerSchema = customerSchema.extend({
+  customId: z.string().optional(),
+});
+
 type CustomerFormValues = z.infer<typeof customerSchema>;
+type AddCustomerFormValues = z.infer<typeof addCustomerSchema>;
 
 export default function Customers() {
   const [, setLocation] = useLocation();
@@ -48,18 +53,29 @@ export default function Customers() {
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
 
-  const addForm = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: { name: "", phone: "", address: "", notes: "" }
+  const addForm = useForm<AddCustomerFormValues>({
+    resolver: zodResolver(addCustomerSchema),
+    defaultValues: { name: "", phone: "", address: "", notes: "", customId: "" }
   });
+
+  const watchedCustomId = addForm.watch("customId");
 
   const editForm = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: { name: "", phone: "", address: "", notes: "" }
   });
 
-  const onAddSubmit = (data: CustomerFormValues) => {
-    createCustomer.mutate({ data }, {
+  const onAddSubmit = (data: AddCustomerFormValues) => {
+    const payload: any = {
+      name: data.name,
+      phone: data.phone,
+      address: data.address,
+      notes: data.notes,
+    };
+    if (data.customId && data.customId.trim() !== "") {
+      payload.id = parseInt(data.customId.trim(), 10);
+    }
+    createCustomer.mutate({ data: payload }, {
       onSuccess: (newCustomer) => {
         toast.success("Customer added successfully");
         setIsAddOpen(false);
@@ -67,7 +83,10 @@ export default function Customers() {
         queryClient.invalidateQueries({ queryKey: getListCustomersQueryKey() });
         setLocation(`/customers/${newCustomer.id}`);
       },
-      onError: () => toast.error("Failed to add customer")
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error || "Failed to add customer";
+        toast.error(msg);
+      }
     });
   };
 
@@ -124,6 +143,31 @@ export default function Customers() {
             </DialogHeader>
             <Form {...addForm}>
               <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+                <FormField control={addForm.control} name="customId" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      Customer ID
+                      <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Optional</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="number"
+                          min="1"
+                          placeholder="Leave blank for auto-assign"
+                          className="pr-24"
+                        />
+                        {watchedCustomId && watchedCustomId.trim() !== "" && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded pointer-events-none">
+                            JST-{String(parseInt(watchedCustomId) || 0).padStart(4, "0")}
+                          </span>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={addForm.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />

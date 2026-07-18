@@ -55,11 +55,39 @@ router.get("/customers", requireAuth(), async (req, res): Promise<void> => {
 
 router.post("/customers", requireAuth(), async (req, res): Promise<void> => {
   try {
-    const { name, phone, address, notes } = req.body;
+    const { id: customId, name, phone, address, notes } = req.body;
     if (!name || !phone) {
       res.status(400).json({ error: "Name and phone are required" });
       return;
     }
+
+    if (customId !== undefined) {
+      const manualId = parseInt(customId);
+      if (isNaN(manualId) || manualId <= 0) {
+        res.status(400).json({ error: "Custom ID must be a positive integer" });
+        return;
+      }
+      // Check for duplicate
+      const [existing] = await db.select().from(customersTable).where(eq(customersTable.id, manualId));
+      if (existing) {
+        res.status(409).json({ error: `Customer ID ${manualId} already exists` });
+        return;
+      }
+      // Use raw SQL to override the serial sequence
+      const pool = (db as any).session?.client ?? (db as any).$client;
+      const result = await pool.query(
+        `INSERT INTO customers (id, name, phone, address, notes, created_at, updated_at)
+         OVERRIDING SYSTEM VALUE
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+         RETURNING *`,
+        [manualId, name, phone, address || null, notes || null]
+      );
+      // Advance the sequence so future auto-inserts don't collide
+      await pool.query(`SELECT setval('customers_id_seq', GREATEST(nextval('customers_id_seq') - 1, $1))`, [manualId]);
+      res.status(201).json(result.rows[0]);
+      return;
+    }
+
     const [customer] = await db
       .insert(customersTable)
       .values({ name, phone, address: address || null, notes: notes || null })
