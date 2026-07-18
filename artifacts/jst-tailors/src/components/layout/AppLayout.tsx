@@ -29,7 +29,7 @@ function SidebarLogo({ logoSrc, size = "lg" }: { logoSrc: string; size?: "sm" | 
             className="w-full h-full object-contain"
           />
         </div>
-        <p className="text-[10px] tracking-[0.25em] text-sidebar-foreground/50 uppercase font-medium">
+        <p className="text-[10px] tracking-[0.25em] text-sidebar-foreground/50 uppercase font-medium whitespace-nowrap">
           Tailor Manager · Since 1980
         </p>
       </Link>
