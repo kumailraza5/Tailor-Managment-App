@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { useGetSettings } from "@workspace/api-client-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -56,9 +55,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Fetch settings to get the dynamic shop logo
-  const { data: settings } = useGetSettings();
-  const logoSrc = settings?.shopLogo || fallbackLogo;
+  const logoSrc = fallbackLogo;
 
   useEffect(() => {
     setMounted(true);
